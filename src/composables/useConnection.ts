@@ -6,7 +6,7 @@ import type { ConnectionStatus } from '../communication/types'
 
 // 模块级单例存储配置
 const wsUrl = useLocalStorage<string>('wheeltec:wsUrl', 'ws://100.122.158.62:9090')
-const videoUrl = useLocalStorage<string>('wheeltec:videoUrl', 'http://100.122.158.62:8080/stream?topic=/camera/color/image_raw')
+const videoUrl = useLocalStorage<string>('wheeltec:videoUrl', 'http://100.122.158.62:8080/stream?topic=/image_raw')
 
 // 模块级单例状态
 const status = ref<ConnectionStatus>('disconnected')
