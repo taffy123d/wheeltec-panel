@@ -40,8 +40,8 @@ bash scripts/robot.sh "df -h"
 ```ini
 ROBOT_HOST="ssh连接ip地址"
 ROBOT_USER="user_name(ssh连接的用户名)"
-ROBOT_PASSWORD=your-password
-ROBOT_ROS_WS_SETUP=/home/ubuntu/ros2_ws/install/setup.bash  # 可选
+ROBOT_PASSWORD="your-password"
+ROBOT_ROS_WS_SETUP=/home/{user_name}/ros2_ws/install/setup.bash  # 可选
 ```
 
 环境变量: `ROBOT_HOST`, `ROBOT_USER`, `ROBOT_PASSWORD`, `ROBOT_ROS_WS_SETUP`, `ROBOT_ROS_SETUP`
