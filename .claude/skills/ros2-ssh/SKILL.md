@@ -2,13 +2,9 @@
 name: ros2-ssh
 description: 通过 SSH 远程连接控制 ROS 2 机器人/主机（Ubuntu + ROS 2），支持命令执行、ROS2 操作和文件传输。基于 paramiko SSH + 配置文件。
 triggers:
-  - ros2
   - 远程ros2
-  - ros2机器人
   - ssh ros2
   - ros2 topic
-  - ros2 node
-  - ros2 launch
   - ros2 远程
   - ros2 ssh
 ---
