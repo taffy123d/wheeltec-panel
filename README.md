@@ -2,6 +2,13 @@
 
 Vue 3 + TypeScript 横屏操控界面，通过 WebSocket/rosbridge 控制 ROS 2 机器人小车。
 
+
+## SSH 远程控制（Skill）
+
+项目包含 `.claude/skills/wheeltec-ssh/`，提供通过 paramiko SSH 远程控制小车的能力,已打包为claude标准skill格式
+
+安卓手机app：https://github.com/taffy123d/wheeltec-panel/releases
+
 ## 快速开始
 
 ```bash
