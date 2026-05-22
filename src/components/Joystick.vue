@@ -11,8 +11,9 @@ const knobX = ref(0)
 const knobY = ref(0)
 const isDragging = ref(false)
 
-const containerSize = 160
-const knobSize = 56
+// 响应式尺寸：大屏用 160x160，小屏用 130x130
+const containerSize = 150
+const knobSize = 52
 const maxTravel = (containerSize - knobSize) / 2
 
 function getCenter(): { cx: number; cy: number } {
@@ -106,8 +107,8 @@ onUnmounted(() => {
 
 .joystick-container {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   background: rgba(0, 229, 255, 0.06);
   border: 2px solid rgba(0, 229, 255, 0.2);
@@ -181,9 +182,9 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 40%, #00e5ff, #006064);
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), 0 0 40px rgba(0, 184, 212, 0.2);
@@ -192,5 +193,22 @@ onUnmounted(() => {
 
 .joystick-knob:active {
   cursor: grabbing;
+}
+
+/* 小屏缩小摇杆 */
+@media (max-width: 540px) {
+  .joystick-container {
+    width: 120px;
+    height: 120px;
+  }
+  .joystick-ring {
+    width: 80px;
+    height: 80px;
+  }
+  .joystick-knob {
+    width: 42px;
+    height: 42px;
+    margin: -21px 0 0 -21px;
+  }
 }
 </style>
