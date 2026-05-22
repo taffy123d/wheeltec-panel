@@ -3,15 +3,11 @@ import { useConnection } from '../composables/useConnection'
 import { useRobotControl } from '../composables/useRobotControl'
 import SvgIcon from './common/SvgIcon.vue'
 
-const { wsUrl, videoUrl, updateWsUrl, updateVideoUrl } = useConnection()
+const { robotIp, wsUrl, videoUrl, updateRobotIp } = useConnection()
 const { maxLinearSpeed, maxAngularSpeed, controlMode } = useRobotControl()
 
-function onWsUrlChange(e: Event): void {
-  updateWsUrl((e.target as HTMLInputElement).value)
-}
-
-function onVideoUrlChange(e: Event): void {
-  updateVideoUrl((e.target as HTMLInputElement).value)
+function onIpChange(e: Event): void {
+  updateRobotIp((e.target as HTMLInputElement).value)
 }
 </script>
 
@@ -22,27 +18,22 @@ function onVideoUrlChange(e: Event): void {
       系统配置
     </h3>
 
-    <!-- WebSocket URL -->
+    <!-- 机器人 IP -->
     <label class="config-item">
-      <span class="label">WebSocket</span>
+      <span class="label">机器人 IP</span>
       <input
         class="config-input"
         type="text"
-        :value="wsUrl"
-        @change="onWsUrlChange"
+        :value="robotIp"
+        @change="onIpChange"
       />
     </label>
 
-    <!-- 视频流 URL -->
-    <label class="config-item">
-      <span class="label">视频流</span>
-      <input
-        class="config-input"
-        type="text"
-        :value="videoUrl"
-        @change="onVideoUrlChange"
-      />
-    </label>
+    <!-- 自动拼接的 URL（只读提示） -->
+    <div class="url-hint">
+      <div>WebSocket: <code>{{ wsUrl }}</code></div>
+      <div>视频流: <code>{{ videoUrl }}</code></div>
+    </div>
 
     <!-- 速度参数 -->
     <div class="config-item">
@@ -117,7 +108,7 @@ function onVideoUrlChange(e: Event): void {
 
 .label {
   color: #78909c;
-  min-width: 60px;
+  min-width: 72px;
   font-size: 12px;
 }
 
@@ -136,7 +127,7 @@ function onVideoUrlChange(e: Event): void {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   color: #eceff1;
-  font-size: 12px;
+  font-size: 13px;
   font-family: 'Cascadia Code', 'Fira Code', monospace;
 }
 
@@ -158,5 +149,18 @@ function onVideoUrlChange(e: Event): void {
   border-radius: 6px;
   color: #eceff1;
   font-size: 13px;
+}
+
+.url-hint {
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #546e7a;
+  line-height: 1.6;
+}
+
+.url-hint code {
+  color: #00b8d4;
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 11px;
 }
 </style>

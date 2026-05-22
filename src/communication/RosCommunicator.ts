@@ -20,8 +20,8 @@ export class RosCommunicator {
     return this._status
   }
 
-  constructor(url = 'ws://100.122.158.62:9090') {
-    this.url = url
+  constructor(url?: string) {
+    this.url = url || ''
   }
 
   setUrl(url: string): void {

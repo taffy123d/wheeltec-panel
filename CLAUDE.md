@@ -111,12 +111,14 @@ UI组件 ← composable ← EventBus ← RosCommunicator ← WebSocket ← 小�
 
 | 端口 | 服务 | 说明 |
 |------|------|------|
-| **9090** | rosbridge WebSocket | 前端 WebSocket 连接 (`ws://100.122.158.62:9090`) |
-| **8080** | web_video_server MJPEG | 视频流 (`http://100.122.158.62:8080/stream?topic=/camera/color/image_raw`) |
+| **9090** | rosbridge WebSocket | 前端 WebSocket 连接 `ws://<robot-ip>:9090` |
+| **8080** | web_video_server MJPEG | 视频流 `http://<robot-ip>:8080/stream?topic=/image_raw` |
+
+> 前端配置面板输入机器人 IP，端口和路径自动拼接，**不在代码中写死 IP**。
 
 ## 小车连接与运维
 
-- SSH: `ssh wheeltec@100.122.158.62`（通过 Tailscale 组网）
+- SSH: `ssh wheeltec@<robot-ip>`（通过 Tailscale 组网）
 - 密码: `dongguan`
 - 主控: NVIDIA Jetson aarch64, Ubuntu 22.04, ROS 2 Humble
 - 工作空间: `/home/wheeltec/wheeltec_ros2/`

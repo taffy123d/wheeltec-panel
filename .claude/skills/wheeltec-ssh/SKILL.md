@@ -342,7 +342,7 @@ bash scripts/robot.sh --upload file /home/wheeltec/file
 ## 注意事项
 
 - 连接基于 **Tailscale 组网**，确保 Tailscale 已连接且小车在线
-- 密码认证存在安全风险，建议配置 SSH 密钥认证：`ssh-copy-id wheeltec@100.122.158.62`
+- 密码认证存在安全风险，建议配置 SSH 密钥认证：`ssh-copy-id wheeltec@<robot-ip>`
 - ROS 2 Humble 命令格式为 `ros2 <verb> <noun>`（如 `ros2 topic list`），与 ROS 1 的 `rostopic list` 不同
 - 文件上传时**本地路径**需用 skill 目录下的相对路径
 - 小车为 Jetson aarch64 架构，注意 Python/ROS 包的架构兼容性

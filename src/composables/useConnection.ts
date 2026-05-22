@@ -4,9 +4,12 @@ import { bus } from '../events/EventBus'
 import { useLocalStorage } from './useLocalStorage'
 import type { ConnectionStatus } from '../communication/types'
 
-// 模块级单例存储配置
-const wsUrl = useLocalStorage<string>('wheeltec:wsUrl', 'ws://100.122.158.62:9090')
-const videoUrl = useLocalStorage<string>('wheeltec:videoUrl', 'http://100.122.158.62:8080/stream?topic=/image_raw')
+// 模块级单例：只存机器人 IP，端口和路径固定
+const robotIp = useLocalStorage<string>('wheeltec:robotIp', '100.122.158.62')
+
+// 自动拼接完整 URL
+const wsUrl = computed(() => `ws://${robotIp.value}:9090`)
+const videoUrl = computed(() => `http://${robotIp.value}:8080/stream?topic=/image_raw`)
 
 // 模块级单例状态
 const status = ref<ConnectionStatus>('disconnected')
@@ -53,12 +56,8 @@ export function useConnection() {
     communicator.disconnect()
   }
 
-  function updateWsUrl(url: string): void {
-    wsUrl.value = url
-  }
-
-  function updateVideoUrl(url: string): void {
-    videoUrl.value = url
+  function updateRobotIp(ip: string): void {
+    robotIp.value = ip
   }
 
   return {
@@ -67,11 +66,11 @@ export function useConnection() {
     isConnecting,
     reconnectAttempt,
     errorMessage,
+    robotIp,
     wsUrl,
     videoUrl,
     connect,
     disconnect,
-    updateWsUrl,
-    updateVideoUrl,
+    updateRobotIp,
   }
 }
