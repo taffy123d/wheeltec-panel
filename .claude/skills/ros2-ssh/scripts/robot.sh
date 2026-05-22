@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-#  Wheeltec 机器人远程控制 - 统一入口
+#  ROS2 机器人远程控制 - 统一入口
 # ============================================================
 #
 # 用法:
@@ -15,8 +15,8 @@
 #   ./robot.sh "hostname && df -h"
 #   ./robot.sh --ros2 "topic list"
 #   ./robot.sh --ros2 "node list"
-#   ./robot.sh --upload ./test.py /home/wheeltec/test.py
-#   ./robot.sh --download /home/wheeltec/log.txt ./log.txt
+#   ./robot.sh --upload ./test.py /home/user/test.py
+#   ./robot.sh --download /home/user/log.txt ./log.txt
 # ============================================================
 
 set -euo pipefail

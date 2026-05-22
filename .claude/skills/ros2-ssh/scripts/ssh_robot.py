@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Wheeltec 机器人 SSH 远程连接模块
+ROS2 机器人 SSH 远程连接模块
 
 用法:
     from ssh_robot import connect, run, ros2
@@ -8,7 +8,7 @@ Wheeltec 机器人 SSH 远程连接模块
     # 执行普通命令
     run("hostname && df -h")
 
-    # 执行ROS2命令
+    # 执行ROS2命令（自动 source 环境）
     ros2("topic list")
     ros2("node list")
 
@@ -16,8 +16,8 @@ Wheeltec 机器人 SSH 远程连接模块
     with connect() as r:
         r.exec("hostname")
         r.ros2("topic list")
-        r.upload("local.txt", "/home/wheeltec/remote.txt")
-        r.download("/home/wheeltec/log.txt", "./log.txt")
+        r.upload("local.txt", "/home/user/remote.txt")
+        r.download("/home/user/log.txt", "./log.txt")
 """
 
 import os
@@ -39,45 +39,92 @@ def _check_deps():
         _DEPS_OK = True
         return True
     except ImportError:
-        print("[wheeltec-skill] paramiko 未安装，正在尝试自动安装...", file=sys.stderr)
+        print("[ros2-ssh] paramiko 未安装，正在尝试自动安装...", file=sys.stderr)
         try:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "paramiko", "-q"],
                 stdout=sys.stderr,
                 stderr=sys.stderr,
             )
-            print("[wheeltec-skill] paramiko 安装成功", file=sys.stderr)
+            print("[ros2-ssh] paramiko 安装成功", file=sys.stderr)
             _DEPS_OK = True
             return True
         except Exception as e:
-            print(f"[wheeltec-skill] 自动安装失败: {e}", file=sys.stderr)
-            print("[wheeltec-skill] 请手动执行: pip install paramiko", file=sys.stderr)
+            print(f"[ros2-ssh] 自动安装失败: {e}", file=sys.stderr)
+            print("[ros2-ssh] 请手动执行: pip install paramiko", file=sys.stderr)
             return False
+
+
+# ---------- 配置加载 ----------
+
+def _skill_root():
+    """返回 skill 根目录（scripts/ 的父目录）"""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _load_config():
+    """加载配置，优先级：环境变量 > robot.conf > 报错"""
+    config = {}
+
+    # 1. 读取 robot.conf（如果存在）
+    conf_file = os.path.join(_skill_root(), "robot.conf")
+    if os.path.isfile(conf_file):
+        with open(conf_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key = key.strip()
+                val = val.strip()
+                if val:
+                    config[key] = val
+
+    # 2. 环境变量覆盖
+    for key in ("ROBOT_HOST", "ROBOT_USER", "ROBOT_PASSWORD",
+                "ROBOT_ROS_WS_SETUP", "ROBOT_ROS_SETUP"):
+        env_val = os.environ.get(key, "")
+        if env_val:
+            config[key] = env_val
+
+    # 3. 设置 ROS 环境默认值
+    if "ROBOT_ROS_SETUP" not in config:
+        # 尝试自动检测 ROS 发行版
+        config["ROBOT_ROS_SETUP"] = "/opt/ros/humble/setup.bash"
+
+    return config
 
 
 # ---------- SSH客户端 ----------
 
 class RobotSSH:
-    """Wheeltec机器人SSH连接"""
+    """ROS2 机器人 SSH 连接"""
 
-    # ---- 默认配置（可通过环境变量覆盖） ----
-    HOST = os.environ.get("ROBOT_HOST", "100.122.158.62")
-    USER = os.environ.get("ROBOT_USER", "wheeltec")
-    PASSWORD = os.environ.get("ROBOT_PASSWORD", "dongguan")
-    ROS_DISTRO = "humble"
-    ROS_SETUP = f"/opt/ros/{ROS_DISTRO}/setup.bash"
-    ROS_WS_SETUP = f"/home/{USER}/wheeltec_ros2/install/setup.bash"
-
-    def __init__(self, host=None, user=None, password=None, timeout=15):
-        self.host = host or self.HOST
-        self.user = user or self.USER
-        self.password = password or self.PASSWORD
+    def __init__(self, host=None, user=None, password=None,
+                 ros_setup=None, ros_ws_setup=None, timeout=15):
+        config = _load_config()
+        self.host = host or config.get("ROBOT_HOST")
+        self.user = user or config.get("ROBOT_USER")
+        self.password = password or config.get("ROBOT_PASSWORD")
+        self.ros_setup = ros_setup or config.get("ROBOT_ROS_SETUP", "/opt/ros/humble/setup.bash")
+        self.ros_ws_setup = ros_ws_setup or config.get("ROBOT_ROS_WS_SETUP", "")
         self.timeout = timeout
         self._client = None
+
+        # 验证必要参数
+        if not self.host:
+            raise ValueError(
+                "未配置 ROBOT_HOST。请在 Skill 根目录创建 robot.conf 或设置环境变量。\n"
+                f"参考模板: {os.path.join(_skill_root(), 'robot.conf.example')}"
+            )
+        if not self.user:
+            raise ValueError("未配置 ROBOT_USER。请在 robot.conf 或环境变量中设置。")
 
     # ---- 连接管理 ----
 
     def connect(self):
+        if not _check_deps():
+            sys.exit(1)
         import paramiko
         self._client = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -118,11 +165,11 @@ class RobotSSH:
 
     def ros2(self, command, timeout=60):
         """执行ROS2命令（自动source环境）"""
-        full_cmd = (
-            f"source {self.ROS_SETUP} && "
-            f"[ -f {self.ROS_WS_SETUP} ] && source {self.ROS_WS_SETUP}; "
-            f"ros2 {command}"
-        )
+        parts = [f"source {self.ros_setup}"]
+        if self.ros_ws_setup:
+            parts.append(f"[ -f {self.ros_ws_setup} ] && source {self.ros_ws_setup}")
+        parts.append(f"ros2 {command}")
+        full_cmd = "; ".join(parts)
         return self.exec(f"bash -c {repr(full_cmd)}", timeout=timeout)
 
     # ---- 文件传输 ----
@@ -190,7 +237,7 @@ def ros2(cmd, timeout=60):
 # ---------- CLI入口 ----------
 
 def _cli():
-    """命令行入口: python ssh_robot.py [--ros2] <command>"""
+    """命令行入口: python ssh_robot.py [--ros2|--upload|--download] <args>"""
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(0)
