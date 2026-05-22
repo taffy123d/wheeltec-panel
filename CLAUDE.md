@@ -76,7 +76,9 @@ UI组件 ← composable ← EventBus ← RosCommunicator ← WebSocket ← 小�
 └─────────────────────────────────────────┘
 ```
 
-## ROS 话题约定（SSH 验证小车源码确认）
+## ROS 话题约定（2026-05-22 已启动系统验证确认）
+
+### 前端使用的话题
 
 | 话题/服务 | 消息类型 | 方向 | 说明 |
 |-----------|----------|------|------|
@@ -85,22 +87,67 @@ UI组件 ← composable ← EventBus ← RosCommunicator ← WebSocket ← 小�
 | `/PowerVoltage` | `std_msgs/msg/Float32` | 小车→前端 | 电池电压（V） |
 | `/robot_charging_flag` | `std_msgs/msg/Bool` | 小车→前端 | 充电状态 |
 | `/robot_charging_current` | `std_msgs/msg/Float32` | 小车→前端 | 充电电流（A） |
-| `/imu/data_raw` | `sensor_msgs/msg/Imu` | 小车→前端 | IMU 数据 |
-| `/camera/color/image_raw` | `sensor_msgs/msg/Image` | 小车→前端 | 摄像头彩色图像（需启动摄像头节点） |
-| `/record/start` | 自定义服务 | 前端→小车 | 启动数据记录 |
-| `/record/stop` | 自定义服务 | 前端→小车 | 停止数据记录 |
+| `/imu/data_raw` | `sensor_msgs/msg/Imu` | 小车→前端 | IMU 原始数据 |
 
-> 实际电池话题为 `/PowerVoltage`（Float32 电压值），**不是** `sensor_msgs/msg/BatteryState`。
+### 附加话题（小车自动发布）
 
-## 小车连接信息
+| 话题 | 类型 | 说明 |
+|------|------|------|
+| `/odom_combined` | `nav_msgs/msg/Odometry` | EKF 融合里程计 |
+| `/imu/data` | `sensor_msgs/msg/Imu` | 滤波后 IMU 数据 |
+| `/tf` / `/tf_static` | `tf2_msgs/msg/TFMessage` | 坐标变换树 |
+| `/red_vel` | `geometry_msgs/msg/Twist` | 急停速度指令 |
+| `/robot_red_flag` | `std_msgs/msg/UInt8` | 故障指示 |
+| `/robot_recharge_flag` | `std_msgs/msg/Int8` | 回充指示 |
+
+### 摄像机话题（需插入摄像头硬件并 `enable_camera:=true`）
+
+| 话题 | 类型 | 说明 |
+|------|------|------|
+| `/camera/color/image_raw` | `sensor_msgs/msg/Image` | Astra Gemini 彩色图像 |
+| `/camera/depth/image_raw` | `sensor_msgs/msg/Image` | 深度图像 |
+
+## 小车服务端口
+
+| 端口 | 服务 | 说明 |
+|------|------|------|
+| **9090** | rosbridge WebSocket | 前端 WebSocket 连接 (`ws://100.122.158.62:9090`) |
+| **8080** | web_video_server MJPEG | 视频流 (`http://100.122.158.62:8080/stream?topic=/camera/color/image_raw`) |
+
+## 小车连接与运维
 
 - SSH: `ssh wheeltec@100.122.158.62`（通过 Tailscale 组网）
 - 密码: `dongguan`
 - 主控: NVIDIA Jetson aarch64, Ubuntu 22.04, ROS 2 Humble
 - 工作空间: `/home/wheeltec/wheeltec_ros2/`
 - 核心节点: `turn_on_wheeltec_robot` 包中的 `wheeltec_robot_node`
-- rosbridge: 需安装 `ros-humble-rosbridge-suite`（尚未安装）
-- 视频: `web_video_server-ros2` 包已存在，可提供 MJPEG HTTP 流
+
+### 一体化启动
+
+```bash
+# 手动启动（中途可加 enable_camera:=true 启动摄像头）
+ros2 launch turn_on_wheeltec_robot wheeltec_frontend.launch.py
+
+# 启动日志
+tail -f /tmp/wheeltec_frontend.log
+```
+
+### systemd 开机自启
+
+```bash
+# 服务已配置并启用
+sudo systemctl status wheeltec-frontend   # 查看状态
+sudo systemctl restart wheeltec-frontend  # 重启
+sudo systemctl stop wheeltec-frontend     # 停止
+journalctl -u wheeltec-frontend -f        # 查看日志
+```
+
+### rosbridge 安装说明
+
+由于 ROS GPG 密钥过期，rosbridge 从 GitHub 源码编译：
+- 源码位置: `/home/wheeltec/wheeltec_ros2/src/rosbridge_suite/`
+- 编译方式: `colcon build --packages-select rosbridge_server rosbridge_library rosapi rosapi_msgs rosbridge_msgs rosbridge_test_msgs`
+- 额外依赖: `python3-tornado`, `python3-bson`, `python3-cbor2`（已安装）
 
 ## 关键约束
 
