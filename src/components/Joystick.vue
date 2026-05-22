@@ -47,7 +47,7 @@ function handleMove(e: PointerEvent): void {
 
   // 转换为速度指令：x 方向 = 线速度，y 方向(反转) = 角速度
   const linearX = (dy / maxTravel) * -0.5 // 上推前进（正）
-  const angularZ = (dx / maxTravel) * -1.0 // 左推左转（正）
+  const angularZ = (dx / maxTravel) * 1.0 // 右推右转
   sendCmdVel(linearX, angularZ)
 }
 
