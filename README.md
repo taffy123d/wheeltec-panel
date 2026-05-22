@@ -136,7 +136,29 @@ cd android && ./gradlew assembleDebug
 # 输出: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-需要 JDK 21 + Android SDK 34，详见 [VUE_APK_GUIDE.md](VUE_APK_GUIDE.md)。
+需要 JDK 21+ + Android SDK 34+。
+
+## SSH 远程控制（Skill）
+
+项目包含 `.claude/skills/wheeltec-ssh/`，提供通过 paramiko SSH 远程控制小车的能力：
+
+```bash
+cd .claude/skills/wheeltec-ssh
+
+# 执行远程命令
+bash scripts/robot.sh "hostname && df -h"
+
+# ROS2 操作
+bash scripts/robot.sh --ros2 "topic list"
+
+# 文件传输
+bash scripts/robot.sh --upload ./local.txt /home/wheeltec/remote.txt
+
+# 系统状态
+bash scripts/robot.sh --status
+```
+
+支持环境变量 `ROBOT_HOST` / `ROBOT_USER` / `ROBOT_PASSWORD` 覆盖默认连接参数。
 
 ## 注意事项
 

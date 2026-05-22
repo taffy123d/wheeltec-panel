@@ -8,3 +8,6 @@ __pycache__/
 vite.config.js
 android/
 capacitor.config.ts
+CLAUDE.md
+pmt
+VUE_APK_GUIDE.md
