@@ -36,14 +36,14 @@ function onRelease(): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 80px;
-  height: 80px;
+  gap: 2px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   border: 3px solid #ff1744;
   background: rgba(255, 23, 68, 0.1);
   color: #ff1744;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   user-select: none;
@@ -57,5 +57,13 @@ function onRelease(): void {
   background: rgba(255, 23, 68, 0.35);
   transform: scale(0.92);
   box-shadow: 0 0 24px rgba(255, 23, 68, 0.5);
+}
+
+@media (max-width: 540px) {
+  .emergency-stop {
+    width: 56px;
+    height: 56px;
+    font-size: 11px;
+  }
 }
 </style>

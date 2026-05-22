@@ -25,10 +25,11 @@ const { videoUrl, isConnected } = useConnection()
 <style scoped>
 .video-display {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 60vh;
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 4 / 3;
   background: #05080f;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;

@@ -117,6 +117,8 @@ export class RosCommunicator {
   private send(data: RosBridgeMessage): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data))
+    } else {
+      console.warn('[RosCommunicator] send skipped, ws state:', this.ws?.readyState)
     }
   }
 

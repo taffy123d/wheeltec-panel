@@ -106,16 +106,16 @@ function timeAgo(ts: number): string {
 .status-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 16px;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #b0bec5;
 }
@@ -123,19 +123,20 @@ function timeAgo(ts: number): string {
 .status-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 15px;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
 }
 
 .label {
   color: #78909c;
-  min-width: 48px;
+  min-width: 44px;
+  font-size: 12px;
 }
 
 .label.sub {
   min-width: 0;
-  font-size: 13px;
+  font-size: 11px;
   color: #546e7a;
 }
 
@@ -143,18 +144,19 @@ function timeAgo(ts: number): string {
   color: #eceff1;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  font-size: 13px;
 }
 
 .value.small {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .battery-bar {
   width: 100%;
-  height: 4px;
+  height: 3px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   overflow: hidden;
 }
 
@@ -165,8 +167,8 @@ function timeAgo(ts: number): string {
 }
 
 .update-time {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 6px;
+  font-size: 11px;
   color: #455a64;
   text-align: right;
 }

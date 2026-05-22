@@ -51,7 +51,6 @@ const { controlMode } = useRobotControl()
   flex-direction: column;
   height: 100dvh;
   width: 100%;
-  max-width: 1024px;
   margin: 0 auto;
   padding: 6px;
   box-sizing: border-box;
@@ -65,8 +64,8 @@ const { controlMode } = useRobotControl()
 .main-area {
   flex: 1;
   display: grid;
-  grid-template-columns: 160px 1fr 220px;
-  gap: 6px;
+  grid-template-columns: minmax(140px, 180px) 1fr minmax(180px, 240px);
+  gap: 8px;
   min-height: 0;
 }
 
@@ -75,7 +74,7 @@ const { controlMode } = useRobotControl()
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -87,7 +86,7 @@ const { controlMode } = useRobotControl()
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .center-panel {
@@ -105,33 +104,18 @@ const { controlMode } = useRobotControl()
   font-size: 13px;
 }
 
-/* 平板竖屏 / 窄屏 */
+/* 手机横屏 */
 @media (max-width: 820px) {
   .control-view {
-    padding: 6px;
-    gap: 6px;
-  }
-
-  .main-area {
-    grid-template-columns: 150px 1fr 200px;
-    gap: 6px;
-  }
-}
-
-/* 手机横屏：更紧凑 */
-@media (max-width: 740px) {
-  .main-area {
-    grid-template-columns: 130px 1fr 180px;
+    padding: 4px;
     gap: 4px;
   }
-
-  .left-panel {
-    padding: 6px;
-    gap: 6px;
+  .main-area {
+    grid-template-columns: minmax(120px, 150px) 1fr minmax(160px, 200px);
+    gap: 4px;
   }
-
   .right-panel {
-    font-size: 12px;
+    font-size: 11px;
   }
 }
 
@@ -140,33 +124,24 @@ const { controlMode } = useRobotControl()
   .control-view {
     height: auto;
     min-height: 100dvh;
-    padding: 4px;
-    gap: 4px;
   }
-
   .main-area {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
     gap: 4px;
   }
-
   .left-panel {
     flex-direction: row;
     justify-content: space-evenly;
     padding: 6px;
-    gap: 8px;
   }
-
   .control-area {
     flex-direction: row;
-    align-items: center;
     gap: 10px;
   }
-
   .center-panel {
     order: -1;
   }
-
   .right-panel {
     display: grid;
     grid-template-columns: 1fr 1fr;

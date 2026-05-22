@@ -92,16 +92,16 @@ function onVideoUrlChange(e: Event): void {
 .config-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 16px;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #b0bec5;
 }
@@ -110,32 +110,33 @@ function onVideoUrlChange(e: Event): void {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 14px;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 
 .label {
   color: #78909c;
-  min-width: 72px;
+  min-width: 60px;
+  font-size: 12px;
 }
 
 .value {
   color: #00e5ff;
-  font-size: 13px;
-  min-width: 60px;
+  font-size: 12px;
+  min-width: 50px;
   font-variant-numeric: tabular-nums;
 }
 
 .config-input {
   flex: 1;
-  min-width: 140px;
-  padding: 8px 10px;
+  min-width: 120px;
+  padding: 6px 8px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   color: #eceff1;
-  font-size: 13px;
+  font-size: 12px;
   font-family: 'Cascadia Code', 'Fira Code', monospace;
 }
 
@@ -147,14 +148,15 @@ function onVideoUrlChange(e: Event): void {
 .range-input {
   flex: 1;
   accent-color: #00b8d4;
+  min-width: 60px;
 }
 
 .config-select {
-  padding: 8px 10px;
+  padding: 6px 8px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   color: #eceff1;
-  font-size: 14px;
+  font-size: 13px;
 }
 </style>

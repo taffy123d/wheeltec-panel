@@ -54,32 +54,32 @@ const statusColor: Record<string, string> = {
 .connection-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .status-text {
-  font-size: 15px;
+  font-size: 14px;
   color: #b0bec5;
 }
 
 .reconnect-info {
-  font-size: 13px;
+  font-size: 12px;
   color: #ffab00;
 }
 
 .error-msg {
-  font-size: 12px;
+  font-size: 11px;
   color: #ff5252;
   flex: 1;
   overflow: hidden;
@@ -93,15 +93,15 @@ const statusColor: Record<string, string> = {
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border: none;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .btn-connect {

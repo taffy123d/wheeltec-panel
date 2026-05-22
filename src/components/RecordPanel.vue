@@ -40,38 +40,38 @@ const { startRecord, stopRecord } = useRobotControl()
 .record-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 16px;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #b0bec5;
 }
 
 .record-buttons {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .record-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
-  padding: 10px;
+  padding: 8px;
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 44px;
+  min-height: 44px;
   justify-content: center;
   transition: all 0.15s;
 }
@@ -97,9 +97,9 @@ const { startRecord, stopRecord } = useRobotControl()
 }
 
 .record-hint {
-  margin: 10px 0 0;
-  font-size: 12px;
+  margin: 6px 0 0;
+  font-size: 11px;
   color: #546e7a;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 </style>
