@@ -40,9 +40,16 @@
 ├── start_chassis_drive.sh                             [自研新增]
 ├── start_traffic_light_color_view.sh                  [自研新增]
 └── stop_traffic_light.sh                              [自研新增]
+└── wheeltec_perception_service.sh                    [自研新增，systemd 专用]
 ```
 
-注意：4 个 `.sh` 脚本应部署在 `/home/wheeltec/`，不在 `wheeltec_ros2` 目录内。当前仓库收入了`deployment_scripts/`
+另外还有一个 systemd 服务定义（位于小车 `/etc/systemd/system/`）：
+```text
+/etc/systemd/system/
+└── wheeltec-perception.service                       [自研新增，开机自启]
+```
+
+注意：`.sh` 脚本应部署在 `/home/wheeltec/`，不在 `wheeltec_ros2` 目录内。当前仓库收入了 `deployment_scripts/`
 
 ## 3. 文件说明
 
@@ -81,7 +88,7 @@
 
 | 文件 | 是否驱动车辆 | 作用 |
 | --- | --- | --- |
-| `autostart_perception_view.sh` | 否 | 启动或复用 RGB、深度相机，启动识别和速度节点，打开调试画面，但只把速度发到测试话题。 |
+| `autostart_perception_view.sh` | 否 | ⚠️ 启动或复用 RGB、深度相机，启动识别和速度节点，打开调试画面，但只把速度发到测试话题。**与 systemd 服务冲突**，已启用自启时请勿使用。 |
 | `start_chassis_drive.sh` | **是** | 检查相机和底盘节点，随后把识别速度接到 `/cmd_vel`。 |
 | `start_traffic_light_color_view.sh` | 否 | 只显示红、黄、绿交通灯颜色，不使用深度和速度控制。 |
 | `stop_traffic_light.sh` | 停车 | 发布零速度、停止相关节点，并直接向底盘串口发送零速度帧。默认还会停止原厂前端和底盘 ROS 驱动。 |
@@ -172,6 +179,58 @@ ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
 ros2 launch turn_on_wheeltec_robot traffic_light_color_debug.launch.py
 ```
 
+### 5.5 开机自启（systemd）
+
+系统安装了两个 systemd 服务，开机后**自动运行**，无需手动操作即可在前端看到 YOLO 检测画面：
+
+```text
+系统启动
+  → wheeltec-frontend.service（底盘 + rosbridge:9090 + web_video:8080 + usb_cam）
+    → 延迟 15s
+  → wheeltec-perception.service
+    → astra_camera（深度摄像头）→ /camera/color/image_raw + /camera/depth/image_raw
+    → 延迟 5s
+    → traffic_light_nodes（YOLO 检测 + 速度控制，测试模式 /traffic_light/cmd_vel_test）
+```
+
+管理命令：
+
+```bash
+# 查看视觉服务状态
+sudo systemctl status wheeltec-perception
+
+# 手动启停（不影响下次开机自启）
+sudo systemctl start wheeltec-perception
+sudo systemctl stop wheeltec-perception
+
+# 查看日志
+journalctl -u wheeltec-perception -n 50
+journalctl -u wheeltec-frontend -n 50
+
+# 禁用/启用开机自启
+sudo systemctl disable wheeltec-perception.service
+sudo systemctl enable wheeltec-perception.service
+```
+
+#### ⚠️ 冲突警告：手动脚本 vs systemd 服务
+
+| 脚本 | 与 systemd 的关系 |
+|------|------------------|
+| `autostart_perception_view.sh` | **冲突**——它和 `wheeltec-perception.service` 都启动同一批节点，先后启动会报端口/话题冲突 |
+| `start_chassis_drive.sh` | **兼容**——只接管 `/cmd_vel`，不重复启动节点 |
+| `start_traffic_light_color_view.sh` | **兼容**——只跑颜色识别，独立节点 |
+| `stop_traffic_light.sh` | **兼容**——紧急停车仍可使用 |
+
+如果要用手动脚本代替 systemd：
+
+```bash
+# 先停掉 systemd 服务
+sudo systemctl stop wheeltec-perception.service
+
+# 再用手动脚本
+/home/wheeltec/autostart_perception_view.sh
+```
+
 ## 6. 结束与紧急停止
 
 一键脚本会在后台启动多个进程，因此关闭终端或只按 `Ctrl+C` 不能保证全部停止。统一使用：
@@ -210,13 +269,15 @@ sudo systemctl start wheeltec-frontend.service
 
 | 方向 | 话题 | 内容 |
 | --- | --- | --- |
-| 输入 | `/image_raw` | RGB 图像 |
-| 输入 | `/camera/depth/image_raw` | 深度图像 |
+| 输入 | `/camera/color/image_raw` | RGB 图像（来自 astra_camera Gemini，编码 rgb8 ✅） |
+| 输入 | `/camera/depth/image_raw` | 深度图像（来自 astra_camera Gemini，编码 16UC1） |
 | 输出 | `/traffic_light/debug_image` | 带识别框、状态和距离的调试图像 |
 | 输出 | `/traffic_light/color` | 交通灯颜色 |
 | 输出 | `/traffic_light/state` | `GO`、`GO_HOLD`、`SLOW` 或 `STOP` |
 | 输出 | `/traffic_light/cmd_vel_test` | 安全测试速度，不接底盘 |
 | 输出 | `/cmd_vel` | 实际底盘速度，仅行驶模式使用 |
+
+> **注**：`/image_raw`（usb_cam）已不再使用。astra_camera Gemini 自带的 RGB 摄像头占用了 USB 设备，现通过 `/camera/color/image_raw` 提供图像源。
 
 控制优先级由高到低为：行人停车、停车牌停车、慢行牌减速、近距离交通灯控制、无有效目标时前进。整合 launch 对 4 类目标的默认有效距离均为 `0.53 m`。
 
@@ -236,7 +297,7 @@ state_timeout_sec = 1.5 s
 source /opt/ros/humble/setup.bash
 source /home/wheeltec/wheeltec_ros2/install/setup.bash
 
-ros2 topic hz /image_raw
+ros2 topic hz /camera/color/image_raw
 ros2 topic hz /camera/depth/image_raw
 ros2 topic hz /traffic_light/debug_image
 ros2 topic echo /traffic_light/state --field data
@@ -247,6 +308,16 @@ ros2 topic echo /traffic_light/cmd_vel_test --field linear.x
 
 ```bash
 ros2 run rqt_image_view rqt_image_view /traffic_light/debug_image
+```
+
+systemd 日志：
+
+```bash
+# 视觉服务日志
+journalctl -u wheeltec-perception -n 50
+
+# 前端服务日志（底盘、rosbridge、web_video）
+journalctl -u wheeltec-frontend -n 50
 ```
 
 运行日志位于：
@@ -268,3 +339,11 @@ RGB + 深度图
   -> 平滑速度
   -> 测试话题或 /cmd_vel
 ```
+
+### 运行模式选择
+
+| 模式 | 启动方式 | 驱动底盘 | 使用场景 |
+|------|---------|---------|---------|
+| **开机自启**（默认） | 系统启动自动运行 | 否（测试话题） | 日常查看前端画面 |
+| **手动测试** | `autostart_perception_view.sh` | 否（测试话题） | 开发调试（需先停 systemd） |
+| **接入底盘** | `start_chassis_drive.sh` | 是 → `/cmd_vel` | 实际行驶时使用 |
