@@ -307,3 +307,91 @@ sleep 5
     → 等待 5 秒
     → traffic_light_nodes（YOLO 检测 + 速度控制，安全测试模式）
 ```
+
+---
+
+## 修复 5：astra_camera（Gemini）占用 USB 设备 → usb_cam 无设备 → 视频消失
+
+启动 astra_camera 深度摄像头后，发现前端视频再次消失。
+
+### 根因分析
+
+astra_camera（Gemini 型号）**自带 RGB 摄像头**。当 `wheeltec_camera.launch.py` 启动 Gemini 时：
+
+1. Gemini 内部的 RGB 摄像头接管了 USB 视频设备（UVC）
+2. 原本由 `usb_cam` 使用的 `/dev/video*` 设备节点被占用/消失
+3. `usb_cam` 启动失败，`/image_raw` 无人发布
+4. `traffic_light_debug_node` 收不到图像数据 → 无法产出 `debug_image`
+5. 前端视频画面消失
+
+### 验证证据
+
+| 检查项 | 结果 |
+|--------|------|
+| `/dev/video*` | 不存在 |
+| `usb_cam` 进程 | 不存在 |
+| `astra_camera_node` 进程 | 运行中 |
+| `/camera/color/image_raw` | 有发布者（astra_camera）编码 **rgb8** ✅ |
+
+### 修复方式
+
+astra_camera 的 Gemini 型号输出 RGB 到 `/camera/color/image_raw`（编码 rgb8），因此将 `traffic_light_debug_node` 的图像输入源从 `usb_cam` 的 `/image_raw` 切换为 astra 的 `/camera/color/image_raw`：
+
+**修改 `wheeltec_perception_service.sh`** 中的 launch 参数：
+
+```bash
+# 修改前：
+ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
+  output_topic:=/traffic_light/cmd_vel_test
+
+# 修改后：
+ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
+  image_topic:=/camera/color/image_raw \
+  output_topic:=/traffic_light/cmd_vel_test
+```
+
+### 修改清单
+
+| 文件 | 位置 | 修改内容 |
+|------|------|----------|
+| `wheeltec_perception_service.sh` | 小车端 `/home/wheeltec/` | launch 参数新增 `image_topic:=/camera/color/image_raw` |
+
+### 最终架构
+
+```
+wheeltec-frontend.service
+  ├── wheeltec_robot_node（底盘控制）
+  ├── robot_state_publisher
+  ├── imu_filter_madgwick
+  ├── ekf_filter_node
+  ├── rosbridge_websocket（:9090）
+  ├── web_video_server（:8080）
+  └── usb_cam → /image_raw（已失效，被 astra Gemini 替代）
+
+wheeltec-perception.service
+  ├── astra_camera（Gemini）
+  │   ├── /camera/color/image_raw（rgb8 ✅ 图像源）
+  │   ├── /camera/depth/image_raw（16UC1 ✅ 深度源）
+  │   └── /camera/ir/image_raw
+  ├── traffic_light_debug_node（YOLOv8 检测）
+  │   └── /traffic_light/debug_image（rgb8 ✅ → web_video_server → 前端）
+  └── traffic_light_velocity_node（速度控制）
+```
+
+### 验证方式
+
+```bash
+# 确认快照可获取
+curl -s -o /dev/null -w 'HTTP %{http_code} Size %{size_download}' \
+  http://localhost:8080/snapshot?topic=/traffic_light/debug_image
+
+# 预期输出: HTTP 200 Size > 0
+
+# 确认颜色图像可读
+ros2 topic echo /camera/color/image_raw --once --field encoding
+# 预期输出: rgb8
+
+# 确认检测节点已订阅颜色话题
+ros2 topic info /camera/color/image_raw -v | grep traffic_light
+# 预期输出包含 traffic_light_debug_node
+```
