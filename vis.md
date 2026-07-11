@@ -39,11 +39,12 @@
 ├── autostart_perception_view.sh                       [自研新增]
 ├── start_chassis_drive.sh                             [自研新增]
 ├── start_traffic_light_color_view.sh                  [自研新增]
-└── stop_traffic_light.sh                              [自研新增]
+├── stop_traffic_light.sh                              [自研新增]
 └── wheeltec_perception_service.sh                    [自研新增，systemd 专用]
 ```
 
 另外还有一个 systemd 服务定义（位于小车 `/etc/systemd/system/`）：
+
 ```text
 /etc/systemd/system/
 └── wheeltec-perception.service                       [自研新增，开机自启]
@@ -115,80 +116,23 @@ chmod +x /home/wheeltec/autostart_perception_view.sh
 chmod +x /home/wheeltec/start_chassis_drive.sh
 chmod +x /home/wheeltec/start_traffic_light_color_view.sh
 chmod +x /home/wheeltec/stop_traffic_light.sh
+chmod +x /home/wheeltec/wheeltec_perception_service.sh
 ```
 
 ## 5. 启动方式
 
-### 5.1 推荐：先进行安全识别测试
+视觉识别可以通过两种方式启动：**开机自启（默认）** 或 **手动脚本**。
 
-在小车图形界面终端运行：
-
-```bash
-/home/wheeltec/autostart_perception_view.sh
-```
-
-此模式会打开识别画面，但**不会驱动小车**。速度只发布到：
-
-```text
-/traffic_light/cmd_vel_test
-```
-
-先确认识别框、距离、状态和测试速度正常，再进行底盘测试。
-
-### 5.2 接入底盘行驶
-
-> 危险：执行后小车可能立即运动。必须先架空车轮或清空车辆周围区域，并确保可以立即执行停止脚本。
-
-```bash
-/home/wheeltec/start_chassis_drive.sh
-```
-
-此会脚本把速度输出改接到：`cmd_vel`
-
-### 5.3 只调试交通灯颜色
-
-```bash
-/home/wheeltec/start_traffic_light_color_view.sh
-```
-
-此模式只显示 `red_light`、`yellow_light`、`green_light`，不会控制小车。
-
-### 5.4 手动启动
-
-安全测试模式：
-
-```bash
-cd /home/wheeltec/wheeltec_ros2
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-
-ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
-  output_topic:=/traffic_light/cmd_vel_test
-```
-
-手动接入底盘：
-
-```bash
-ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
-  output_topic:=/cmd_vel
-```
-
-只看交通灯颜色：
-
-```bash
-ros2 launch turn_on_wheeltec_robot traffic_light_color_debug.launch.py
-```
-
-### 5.5 开机自启（systemd）
+### 5.1 开机自启（systemd）— 默认方式
 
 系统安装了两个 systemd 服务，开机后**自动运行**，无需手动操作即可在前端看到 YOLO 检测画面：
 
 ```text
 系统启动
   → wheeltec-frontend.service（底盘 + rosbridge:9090 + web_video:8080 + usb_cam）
-    → 延迟 15s
+    → 延迟 15s（ExecStartPre）
   → wheeltec-perception.service
-    → astra_camera（深度摄像头）→ /camera/color/image_raw + /camera/depth/image_raw
+    → astra_camera（深度摄像头）：/camera/color/image_raw + /camera/depth/image_raw
     → 延迟 5s
     → traffic_light_nodes（YOLO 检测 + 速度控制，测试模式 /traffic_light/cmd_vel_test）
 ```
@@ -212,16 +156,9 @@ sudo systemctl disable wheeltec-perception.service
 sudo systemctl enable wheeltec-perception.service
 ```
 
-#### ⚠️ 冲突警告：手动脚本 vs systemd 服务
+### 5.2 手动脚本启动（需先停 systemd）
 
-| 脚本 | 与 systemd 的关系 |
-|------|------------------|
-| `autostart_perception_view.sh` | **冲突**——它和 `wheeltec-perception.service` 都启动同一批节点，先后启动会报端口/话题冲突 |
-| `start_chassis_drive.sh` | **兼容**——只接管 `/cmd_vel`，不重复启动节点 |
-| `start_traffic_light_color_view.sh` | **兼容**——只跑颜色识别，独立节点 |
-| `stop_traffic_light.sh` | **兼容**——紧急停车仍可使用 |
-
-如果要用手动脚本代替 systemd：
+如果要用 `autostart_perception_view.sh` 代替 systemd 自启：
 
 ```bash
 # 先停掉 systemd 服务
@@ -229,6 +166,91 @@ sudo systemctl stop wheeltec-perception.service
 
 # 再用手动脚本
 /home/wheeltec/autostart_perception_view.sh
+```
+
+此模式会打开识别画面，但**不会驱动小车**。速度只发布到：
+
+```text
+/traffic_light/cmd_vel_test
+```
+
+先确认识别框、距离、状态和测试速度正常，再进行底盘测试。
+
+### 5.3 ✅ 与 systemd 和谐共处的操作
+
+以下操作在 systemd 自启状态下**安全可用**，不会冲突：
+
+| 操作 | 命令 | 说明 |
+|------|------|------|
+| **看图** | `ros2 run rqt_image_view rqt_image_view /traffic_light/debug_image` | 纯订阅者，只拉取画面，不影响任何节点 |
+| **查看话题** | `ros2 topic echo /traffic_light/state --field data` | 只读操作，不影响 |
+| **搭桥开车** | `/home/wheeltec/start_chassis_drive.sh` | 只做 topic remap，不重复启动节点 |
+| **查看日志** | `journalctl -u wheeltec-perception -n 50` | 只读日志 |
+| **紧急停车** | `/home/wheeltec/stop_traffic_light.sh` | 互补操作 |
+| **开关服务** | `sudo systemctl stop/start wheeltec-perception` | 正常管理操作 |
+
+### 5.4 ⚠️ 与 systemd 冲突的操作
+
+以下操作在 systemd 自启状态下**会冲突**，请勿使用：
+
+| 操作 | 冲突原因 |
+|------|---------|
+| `autostart_perception_view.sh` | 和 `wheeltec-perception.service` 都启动同一批节点，先后启动会报端口/话题冲突 |
+| 手动 `ros2 launch traffic_light_nodes.launch.py` | 同上，重复启动 YOLO 节点 + 速度节点 |
+| 手动 `ros2 launch wheeltec_camera.launch.py` | 深度摄像头 USB 设备已被 astra_camera 占用 |
+
+**冲突本质**：从 RGB 输入 → YOLO 检测 → 速度输出的整条链路，systemd 已经跑了一份，再跑一份就会：
+
+- 两个节点抢同一话题（消息重复或混乱）
+- USB 摄像头设备被占用（启动失败）
+- 同端口进程冲突（崩溃）
+
+### 5.5 接入底盘行驶
+
+> 危险：执行后小车可能立即运动。必须先架空车轮或清空车辆周围区域，并确保可以立即执行停止脚本。
+
+无论使用 systemd 自启还是手动脚本启动，接入底盘都执行：
+
+```bash
+/home/wheeltec/start_chassis_drive.sh
+```
+
+此脚本把速度输出改接到 `/cmd_vel`。
+
+### 5.6 只调试交通灯颜色
+
+```bash
+/home/wheeltec/start_traffic_light_color_view.sh
+```
+
+此模式只显示 `red_light`、`yellow_light`、`green_light`，不会控制小车。systemd 自启状态下也可安全使用。
+
+### 5.7 手动启动（已停用 systemd 后使用）
+
+安全测试模式：
+
+```bash
+cd /home/wheeltec/wheeltec_ros2
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+
+ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
+  image_topic:=/camera/color/image_raw \
+  output_topic:=/traffic_light/cmd_vel_test
+```
+
+手动接入底盘：
+
+```bash
+ros2 launch turn_on_wheeltec_robot traffic_light_nodes.launch.py \
+  image_topic:=/camera/color/image_raw \
+  output_topic:=/cmd_vel
+```
+
+只看交通灯颜色：
+
+```bash
+ros2 launch turn_on_wheeltec_robot traffic_light_color_debug.launch.py
 ```
 
 ## 6. 结束与紧急停止
@@ -297,9 +319,12 @@ state_timeout_sec = 1.5 s
 source /opt/ros/humble/setup.bash
 source /home/wheeltec/wheeltec_ros2/install/setup.bash
 
+# 检查各话题频率
 ros2 topic hz /camera/color/image_raw
 ros2 topic hz /camera/depth/image_raw
 ros2 topic hz /traffic_light/debug_image
+
+# 查看当前识别状态和速度
 ros2 topic echo /traffic_light/state --field data
 ros2 topic echo /traffic_light/cmd_vel_test --field linear.x
 ```
@@ -340,10 +365,10 @@ RGB + 深度图
   -> 测试话题或 /cmd_vel
 ```
 
-### 运行模式选择
+### 运行模式总结
 
 | 模式 | 启动方式 | 驱动底盘 | 使用场景 |
 |------|---------|---------|---------|
 | **开机自启**（默认） | 系统启动自动运行 | 否（测试话题） | 日常查看前端画面 |
 | **手动测试** | `autostart_perception_view.sh` | 否（测试话题） | 开发调试（需先停 systemd） |
-| **接入底盘** | `start_chassis_drive.sh` | 是 → `/cmd_vel` | 实际行驶时使用 |
+| **搭桥开车** | `start_chassis_drive.sh` | 是 → `/cmd_vel` | 实际行驶时使用（systemd 下安全） |
