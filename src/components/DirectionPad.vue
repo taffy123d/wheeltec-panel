@@ -29,11 +29,11 @@ function onForwardRightStart(): void {
 }
 
 function onBackwardLeftStart(): void {
-  startDpadMove(-maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
+  startDpadMove(-maxLinearSpeed.value * 0.7, maxAngularSpeed.value * 0.7)
 }
 
 function onBackwardRightStart(): void {
-  startDpadMove(-maxLinearSpeed.value * 0.7, maxAngularSpeed.value * 0.7)
+  startDpadMove(-maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
 }
 </script>
 
