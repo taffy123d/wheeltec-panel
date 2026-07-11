@@ -9,7 +9,7 @@ const robotIp = useLocalStorage<string>('wheeltec:robotIp', '100.122.158.62')
 
 // 自动拼接完整 URL
 const wsUrl = computed(() => `ws://${robotIp.value}:9090`)
-const videoUrl = computed(() => `http://${robotIp.value}:8080/stream?topic=/image_raw`)
+const videoUrl = computed(() => `http://${robotIp.value}:8080/stream?topic=/traffic_light/debug_image`)
 
 // 模块级单例状态
 const status = ref<ConnectionStatus>('disconnected')
