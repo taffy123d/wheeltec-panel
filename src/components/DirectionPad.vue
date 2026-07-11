@@ -13,27 +13,27 @@ function onBackwardStart(): void {
 }
 
 function onLeftStart(): void {
-  startDpadMove(0, -maxAngularSpeed.value)
-}
-
-function onRightStart(): void {
   startDpadMove(0, maxAngularSpeed.value)
 }
 
-function onForwardLeftStart(): void {
-  startDpadMove(maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
+function onRightStart(): void {
+  startDpadMove(0, -maxAngularSpeed.value)
 }
 
-function onForwardRightStart(): void {
+function onForwardLeftStart(): void {
   startDpadMove(maxLinearSpeed.value * 0.7, maxAngularSpeed.value * 0.7)
 }
 
+function onForwardRightStart(): void {
+  startDpadMove(maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
+}
+
 function onBackwardLeftStart(): void {
-  startDpadMove(-maxLinearSpeed.value * 0.7, maxAngularSpeed.value * 0.7)
+  startDpadMove(-maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
 }
 
 function onBackwardRightStart(): void {
-  startDpadMove(-maxLinearSpeed.value * 0.7, -maxAngularSpeed.value * 0.7)
+  startDpadMove(-maxLinearSpeed.value * 0.7, maxAngularSpeed.value * 0.7)
 }
 </script>
 
