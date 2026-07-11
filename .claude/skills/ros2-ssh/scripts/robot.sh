@@ -21,9 +21,8 @@
 
 set -euo pipefail
 
-# 获取 Windows 格式的项目路径（避免 MSYS2 路径转换问题）
-SCRIPT_DIR_WIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -W)"
-SCRIPT_FILE="$SCRIPT_DIR_WIN/ssh_robot.py"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_FILE="$SCRIPT_DIR/ssh_robot.py"
 
 # 智能检测可用的Python解释器
 _find_python() {
